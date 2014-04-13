@@ -1,0 +1,185 @@
+
+#########################################################
+
+This is the code for the paper:
+"Bulbar microcircuit model predicts connectivity and roles of interneurons in odor coding"
+ by Aditya Gilra and Upinder Bhalla, National Centre for Biological Sciences, Bangalore, India,
+ which has been accepted subject to minor revisions by PLOS ONE on Mar 4, 2014.
+Any queries may be addressed to Aditya Gilra: aditya_gilra at yahoo period com .
+
+##########################################################
+
+This code runs with MOOSE 1.4 beta at:
+http://sourceforge.net/p/moose/code/HEAD/tree/moose/branches/moose_Beta_1.4/
+It has been used with svn commit 3207, but later commits on this branch should work too.
+
+It has been used on Ubuntu linux 12.04 Desktop version,
+ and on a cluster gulabjamun at NCBS, running CentOS release 5.2 (Final).
+
+A simplified model to work with other simulators is under development.
+
+##########################################################
+
+Installation:
+
+1. Get this model's code as per instructions (github, modeldb, etc).
+2. Download MOOSE and install as per instructions.
+    Confirm in a python terminal that `import moose` works fine.
+    If not, check MOOSE compilation and ensure that your PYTHONPATH contains the python/ directory in the MOOSE code.
+3. You also need to install python 2.6 or 2.7 and python modules numpy, scipy, matplotlib, mpi4py (via synaptic / manually).
+4. A lot of the simulation scripts use mpi for parallel farming of jobs and collation of the output.
+    So you need some mpi library say openmpi on your cluster / desktop.
+
+##########################################################
+
+Running simulations:
+
+In the top part of all runnable python scripts in various folders,
+ you will find a number of suggested usage commands.
+ they typically have `python2.6` in the command,
+ but you can use just `python` as long as you have python 2.6 or 2.7 installed.
+
+1. Running a PG cell model:
+In a terminal (linux shell), cd to cells/ folder and run:
+ python PGTest_mcquiston_katz.py PG2010
+ After simulation, this should pop up figure 2H of the paper,
+ showing electrophysiology of a plateauing PG cell.
+ To get figure 2E, for the low-threshold spiking PG cell:
+ python PGTest_mcquiston_katz.py PG2013
+
+2. Testing the synapses on a cell model
+In a terminal (linux shell), cd to cells/ folder and run:
+ python2.6 CellTest_synapses.py mitral granule_mitral Iclamp 50 100e-3 staggered
+ This will activate 50 randomly-chosen 'granule-mitral' synapses on a mitral cell staggered 100ms apart,
+ and will plot the resulting Vm trace showing the IPSPs.
+ You can try Vclamp vs Iclamp, staggered vs simultaneous,
+ and can specify a compartment name also for simultaneous (see top of script).
+
+3. Network simulations
+For the network model simulation scripts in the simulations/ folder,
+ you have to first generate the network model file,
+ then generate 'firefiles' that contain Poisson spike trains as:
+ (a) background for granule cells, and (b) as proxy for ORNs.
+ Then you can run scripts from the simulations folder,
+ but many of these still require a cluster.
+
+An example not needing a cluster is provided below.
+This runs an odor morph between two odors, single trial, 1.75s simulation
+ which takes ~half an hour to an hour of simulation time.
+
+(a) In generators/stimuliConstantsMinimal.py,
+    modify the lines (as below) for generating the ORN input and the network file.
+## used by generate_firerates.py
+stim_rate_seednum = 844.0
+## used by generate_neuroml.py
+stim_net_seed = 844.0
+
+(b) In simulations/simset_odor_minimal.py
+    set the same seeds in these lines:
+netseedstr = "844.0"
+rateseedstr = "844.0"
+OBNet_file = "../netfiles/syn_conn_array_10000_singlesclubbed100_jointsclubbed1_numgloms3_seed844.0_directed0.01_proximal.xml"
+ORNpathseedstr = "../firefiles/firefiles844.0/"
+    You can also set which cell populations should be simulated or not in the same file:
+NO_SINGLES = False
+## spine inhibition and singles are self-inh
+## toggle them on/off together
+NO_SPINE_INH = NO_SINGLES
+NO_JOINTS = False
+NO_MULTIS = NO_JOINTS
+NO_PGS = False
+NO_LATERAL = False
+
+(c) ensure you have these directories
+    netfiles/, firefiles/firefiles_baseline/, generators/firerates/, results/odor_morphs/
+    present in this source tree. Else create them.
+
+(d) in generators/ folder run the following commands in a terminal
+    (i) generate network file:
+    python generate_neuroML.py
+    (ii) generate the background input spike trains to granule cells
+    python generate_firefiles_gran_baseline.py
+    (iii) generate the receptor (ORN) time-varying firing rates for the glomeruli
+    python generate_firerates_odors.py
+    (iv) generate the receptor spike trains for the above firing rates
+    python generate_firefiles_odors.py
+
+(e) in simulations/ folder run the main simulation command in a terminal
+    python2.6 odor_morphs.py
+    This can take half to one hour to run.
+    Various plots will come up and 
+    results will be pickled in a file in results/odor_morphs/.
+
+##########################################################
+
+Here is a list of directories and what they contain:
+
+channels/
+contains various channels as NeuroML 1.8.0 files,
+however channels for the mitral cell are individual python class files.
+There is a helper utility that loads all these channels into MOOSE path '/library',
+ from where they may be deep copied under each compartment of each cell and connected via messages.
+ For just running the scripts or loading models, you don't need to bother about this.
+
+synapses/
+contains various synapses as NeuroML 1.8.0 files,
+however synapses for the mitral cell are individual python class files.
+There is a helper utility that loads all these synapses into MOOSE path '/library',
+ from where they may be deep copied under each compartment of each cell and connected via messages.
+ For just running the scripts or loading models, you don't need to bother about this.
+
+cells/
+contains the three cell models i.e. morphology, channel distribution and potential synaptic locations as
+single Level 1, 2 and 3 NeuroML 1.8.0 files.
+The relevant files are:
+mitral_bbmit1993davison_neuroML_L1_L2_L3_mod_withspikeinit.xml  --  mitral cell 286 compartments
+PG_aditya2013unified_neuroML_L1_L2_L3.xml  --  low-threshold firing PG cell 3 compartments
+PG_aditya2010unified_neuroML_L1_L2_L3.xml  --  plateauing PG cell 3 compartments
+granule_granadityaMS2007_neuroML_L1_L2_L3.xml  --  granule cell 2 compartments
+There is a helper utility load_cells.py that loads all the cells into MOOSE path '/library'.
+ from where they may be deep copied when generating the network.
+ For just running the scripts or loading models, you don't need to bother about this.
+
+generators/
+contains scripts for generating the NeuroML 1.8.0 full network in netfiles/ folder
+ based on various connectivity parameters specified in networkConstants.py in networks/ folder.
+contains scripts for generating the firing rate files in generators/firerates/ folder
+ that contain the firing rates needed for (a) background granule input, (b) proxy for ORNs.
+contains scripts for generating 'firefiles' in firefiles/ folder
+ that contain Poisson spike trains required for (a) background granule input, (b) as proxy for ORNs.
+stimuliConstants.py contains various 'constants' / stimulus parameters for the model,
+ the ones that need to be changed for different runs in the paper are usually in stimuliConstantsMinimal.py .
+
+netfiles/
+contains the NeuroML 1.8.0 files generated by generate_neuroML.py in the generators/ folder.
+ Currently empty as it's too huge to be distibuted.
+
+networks/
+contains a script OBModel.py that loads the NeuroML model generated above
+ and connects the various stimuli generated above to the requisite cells.
+networkConstants.py contains various 'constants' / model parameters,
+ the ones that need to be changed for different runs in the paper are usually in networkConstantsMinimal.py .
+
+simulations/
+contains the scripts to run the various simulations:
+ activity dependent inhibition: in vitro and in vivo
+ odor morphs for decorrelation between sister cells and linearity in respiring responses
+ odor pulses for linearity in odor pulse train responses.
+
+results/
+ has subfolders ADI, tuftADI, odor_morphs, odor_pulses to save results
+ from the various simulations run by scripts in the simulations folder.
+ For different simulation parameters, you may want to rename/copy the results folders to avoid overwriting.
+ This is empty because it is too large to distribute.
+
+analysis/
+These require extensive sets of simulation results (running over a day to a month) in the results\ folder
+ to be analysed and made into various figures in particular Figs 4-8 and S2-S7.
+ I have these results, but being huge (~3 GB), I have not uploaded them on modeldb/github.
+
+neuroml/
+Some *.xsl to use xslt to transform neuroml files to .x3d files for viewing using standard 3d viewers.
+First use neuroml_merge_cells.py on a 'netfile' to get netfile that has the cell morphology built-in
+ and then run xslt to convert to x3d.
+
+other folders are odds and ends -- not needed directly for the model.

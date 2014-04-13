@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<X3D xmlns:xsd="http://www.w3.org/2001/XMLSchema-instance" profile="Immersive" version="3.1" xsd:noNamespaceSchemaLocation=" http://www.web3d.org/specifications/x3d-3.1.xsd ">
+  <Scene>
+    <Background skyColor="0.6 0.7 0.9"/>
+    <Viewpoint description="Down z axis, 500 microns away" position="0 0 500"/>
+    <Viewpoint description="Down z axis, 200 microns away" position="0 0 200"/>
+    <Viewpoint description="Down z axis, 2mm away" position="0 0 2000"/>
+    <Transform translation="-636.729553069 -41.5518480783 300.0">
+      <Shape>
+        <Text string="1" solid="false">
+          <FontStyle DEF='CenteredFontStyle' justify='"MIDDLE" "MIDDLE"' size="100.0"/>
+        </Text>
+        <Appearance>
+          <Material DEF="DefaultMaterial" diffuseColor="1 1 0"/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform translation="-636.729553069 -41.5518480783 300.0">
+      <Shape>
+        <Appearance>
+          <Material/>
+          <LineProperties applied="true" linewidthScaleFactor="1"/>
+        </Appearance>
+        <LineSet vertexCount="2">
+          <Coordinate point="0  0  0, 32  0  0"/>
+          <Color color="0 0 0, 0 0 0"/>
+        </LineSet>
+      </Shape>
+    </Transform>
+  </Scene>
+</X3D>
