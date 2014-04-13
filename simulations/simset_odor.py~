@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+# ALL SI UNITS
+# milliMolar is same as mol/m^3
+
+# These are the simulation parameters for testing recurrent and lateral inhibition on mitrals via granules
+# Only 2 gloms, 2 mitral sisters per glom.
+
+from pylab import *
+rc('path',simplify= False) # To ensure matplotlib connects points at expense of speed.
+
+SIMDT = 5e-5 # seconds
+## Correction factor for event-based vs graded synchans
+## In event-based case, activation = weight/simdt while in graded case activation is used directly.
+## Further, due to every sim point in graded case acting like an event, moose gives a convolved Gk which is much larger (say 1000 times) than the event based one.
+## So I should correct for simdt and the activation weighted multiple events at every simdt.
+#synchan_activation_correction = 1/SIMDT / 1000 # for SIMDT=1e-5
+synchan_activation_correction = 1/SIMDT / 250 # for SIMDT=5e-5
+
+PLOTDT = 5e-5 # seconds
+# add SETTLETIME from stimuliConstants.py to the REALRUNTIME to get the simulation RUNTIME
+REALRUNTIME = 1.0 # seconds - for active inhibition - stimulus only for 500ms
+
+VOLTAGE_CLAMP = False
+
+NUMBINS = 10
+###### Somehow mpiexec doesn't like number of processes > 1000 and gives errors somewhere in the middle of the run while trying to send to the boss, after which boss decides the below:
+## rank 0 in job 35  gulabjamun.ncbs.res.in_56625 caused collective abort of all ranks
+############ So ensure that NUMAVG+1 < 1000
+####### For a network rather than isolated mitral cell, even 500 processes make the cluster hang. Has worked only for 32 processes, didn't test inbetween yet.
+##### Basically memory overflow problems - use less memory by using less data tables
+NUMAVG = 8 # don't make NUMAVG higher than 200.
+
+OBNet_file = '../netfiles/syn_conn_array_10000_singlesclubbed100_jointsclubbed3.xml'
+
+NO_SINGLES = False
+NO_JOINTS = False
+NO_MULTIS = True
+NO_PGS = False
+IN_VIVO = True
+
+CLUB_MITRALS = True#False # If unmodeled mitrals connect to same granule as modeled mitrals, provide extra excitation to granule from modeled mitral
+ONLY_TWO_MITS = False # Only two mitrals with below indices (neuroml id-s) to test lateral inhibition.
+
+ODOR_GIVEN = True
